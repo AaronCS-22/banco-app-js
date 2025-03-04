@@ -1,5 +1,6 @@
 import "./style.css";
-import accounts from "./accounts.js";
+import cuentasGeneradas from "./generarCuentas.js";
+
 document.querySelector("#app").innerHTML = `
     <nav>
       <p class="welcome">Log in to get started</p>
@@ -130,14 +131,15 @@ const createUsernames = function (accounts) {
       .join(""); // js
   });
 };
-createUsernames(accounts);
+createUsernames(cuentasGeneradas);
+
 btnLogin.addEventListener("click", function (e) {
   // evitar que el formulario se envíe
   e.preventDefault();
   // recojo el username y el pin y los comparo con los datos de las cuentas
   const inputUsername = inputLoginUsername.value;
   const inputPin = Number(inputLoginPin.value);
-  const account = accounts.find(
+  const account = cuentasGeneradas.find(
     (account) => account.username === inputUsername
   );
   // .find((account) => account.pin === inputPin);
