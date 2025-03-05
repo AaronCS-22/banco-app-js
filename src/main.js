@@ -120,8 +120,8 @@ const inputTransferAmount = document.querySelector(".form__input--amount");
 const inputLoanAmount = document.querySelector(".form__input--loan-amount");
 const inputCloseUsername = document.querySelector(".form__input--user");
 const inputClosePin = document.querySelector(".form__input--pin");
-// creamos el campo username para todas las cuentas de usuarios
-// usamos forEach para modificar el array original, en otro caso map
+// Creamos el campo username para todas las cuentas de usuarios
+// Usamos forEach para modificar el array original, en otro caso map
 const createUsernames = function (accounts) {
   accounts.forEach(function (account) {
     account.username = account.owner // Juan Sanchez
@@ -134,48 +134,43 @@ const createUsernames = function (accounts) {
 createUsernames(cuentasGeneradas);
 
 btnLogin.addEventListener("click", function (e) {
-  // evitar que el formulario se envíe
+  // Evitamos que el formulario se envíe
   e.preventDefault();
-  // recojo el username y el pin y los comparo con los datos de las cuentas
+  // Recogemos el username y el pin, y se compara con los datos de las cuentas
   const inputUsername = inputLoginUsername.value;
   const inputPin = Number(inputLoginPin.value);
   const account = cuentasGeneradas.find(
     (account) => account.username === inputUsername
   );
-  // .find((account) => account.pin === inputPin);
-  // lo anterior no funciona porque account ya es un array
   if (account && account.pin === inputPin) {
-    // MÁS CONCISO:  if (account?.pin === inputPin) {
-    // si el usuario y el pin son correctos
-    // mensaje de bienvenida y que se vea la aplicación
+    // Si el usuario y el pin son correctos, se realiza un mensaje de bienvenida y que se vea la aplicación
     containerApp.style.opacity = 1;
     labelWelcome.textContent = `Welcome back, ${account.owner.split(" ")[0]}`;
-    // limpiar formulario
+    // Se limpia el formulario
     inputLoginUsername.value = inputLoginPin.value = "";
-    // cargar los datos (movimientos de la cuenta)
+    // Se cargan los datos (movimientos de la cuenta)
     updateUI(account);
   } else {
     console.log("login incorrecto");
   }
 });
 const updateUI = function ({ movements }) {
-  // const {movements} = account.movements
-  // mostrar los movimientos de la cuenta
+  // Mostrar los movimientos de la cuenta
   displayMovements(movements);
-  // mostrar el balance de la cuenta
+  // Mostrar el balance de la cuenta
   displayBalance(movements);
-  // mostrar el total de los movimientos de la cuenta
-  // ingresos y gastos
+  // Mostrar el total de los movimientos de la cuenta
+  // Ingresos y gastos
   displaySummary(movements);
 };
 const displayMovements = function (movements) {
-  // vaciamos el HTML
+  // Vaciamos el HTML
   containerMovements.innerHTML = "";
-  // recorremos el array de movimientos
+  // Recorremos el array de movimientos
   movements.forEach((mov, i) => {
-    // creamos el html para cada movimiento y lo guardamos en una variable
+    // creamos el HTML para cada movimiento y lo guardamos en una variable
     const type = mov > 0 ? "deposit" : "withdrawal";
-    // creamos el HTML
+    // Creamos el HTML
     const html = `
       <div class="movements__row">
         <div class="movements__type movements__type--${type}">${i + 1} ${
@@ -185,13 +180,35 @@ const displayMovements = function (movements) {
         <div class="movements__value">${mov.toFixed(2)}€</div>
       </div>
     `;
-    // insertamos el HTML en el DOM
+    // Insertamos el HTML en el DOM
     containerMovements.insertAdjacentHTML("afterbegin", html);
   });
 };
 const displayBalance = function (movements) {
-  // calculamos suma de ingresos y retiradas de efectivo
+  // Calculamos suma de ingresos y retiradas de efectivo
   const balance = movements.reduce((total, movement) => total + movement, 0);
-  // actualizamos el DOM:
+  // Actualizamos el DOM:
   labelBalance.textContent = `${balance.toFixed(2)} €`;
+};
+
+const displaySummary = function (movements) {
+  // Calculamos los ingresos
+  const incomes = movements
+    .filter(mov => mov > 0)
+    .reduce((sum, mov) => sum + mov, 0);
+  labelSumIn.textContent = `${incomes.toFixed(2)}€`;
+
+  // Calculamos los gastos
+  const outflows = movements
+    .filter(mov => mov < 0)
+    .reduce((sum, mov) => sum + Math.abs(mov), 0);
+  labelSumOut.textContent = `${outflows.toFixed(2)}€`;
+
+  // Calculamos los intereses (suponiendo que se apliquen solo a depósitos y con una tasa media del 1.5%)
+  const interestRate = 1.5 / 100;
+  const interest = movements
+    .filter(mov => mov > 0)
+    .map(dep => dep * interestRate)
+    .reduce((sum, int) => sum + int, 0);
+  labelSumInterest.textContent = `${interest.toFixed(2)}€`;
 };
