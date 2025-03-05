@@ -120,6 +120,10 @@ const inputTransferAmount = document.querySelector(".form__input--amount");
 const inputLoanAmount = document.querySelector(".form__input--loan-amount");
 const inputCloseUsername = document.querySelector(".form__input--user");
 const inputClosePin = document.querySelector(".form__input--pin");
+
+// Variables
+let currentAccount;
+
 // Creamos el campo username para todas las cuentas de usuarios
 // Usamos forEach para modificar el array original, en otro caso map
 const createUsernames = function (accounts) {
@@ -150,8 +154,11 @@ btnLogin.addEventListener("click", function (e) {
     inputLoginUsername.value = inputLoginPin.value = "";
     // Se cargan los datos (movimientos de la cuenta)
     updateUI(account);
+    // Guardamos los datos de la cuenta para conocer quién está conectado
+    currentAccount = account;
   } else {
-    console.log("login incorrecto");
+    // Mostramos una alerta con el login incorrecto
+    alert("Login incorrecto.")
   }
 });
 const updateUI = function ({ movements }) {
@@ -168,7 +175,7 @@ const displayMovements = function (movements) {
   containerMovements.innerHTML = "";
   // Recorremos el array de movimientos
   movements.forEach((mov, i) => {
-    // creamos el HTML para cada movimiento y lo guardamos en una variable
+    // Creamos el HTML para cada movimiento y lo guardamos en una variable
     const type = mov > 0 ? "deposit" : "withdrawal";
     // Creamos el HTML
     const html = `
@@ -212,3 +219,53 @@ const displaySummary = function (movements) {
     .reduce((sum, int) => sum + int, 0);
   labelSumInterest.textContent = `${interest.toFixed(2)}€`;
 };
+
+btnTransfer.addEventListener('click', function (e) {
+  // Evitamos que el formulario se envíe
+  e.preventDefault();
+  // Se obtiene la cantidad y el nombre de usuario al que se quiere hacer la transferencia
+  const amount = Number(inputTransferAmount.value);
+  const transferUsername = inputTransferTo.value.trim();
+  // Buscar la cuenta del receptor usando el username (iniciales)
+  const transferAccount = cuentasGeneradas.find(
+    (account) => account.username === transferUsername
+  );
+  // Obtener la cuenta actual del usuario autenticado
+  const transferCurrentAccount = cuentasGeneradas.find(
+    account => account.username === currentAccount.username
+  );
+  // Verificar si la cuenta del receptor existe
+  if (!transferAccount) {
+    // Mostrar un mensaje de error
+    alert("El nombre de usuario del receptor no es válido.");
+    return;
+  }
+  // Verificar si la cuenta actual existe
+  if (!transferCurrentAccount) {
+    // Mostrar un mensaje de error
+    alert("Hubo un problema con tu cuenta.");
+    return;
+  }
+  // Calcular el saldo del remitente (sumando los movimientos)
+  const currentBalance = transferCurrentAccount.movements.reduce((acc, mov) => acc + mov, 0);
+  // Verificar las condiciones para la transferencia
+  if (
+    amount > 0 && // La cantidad debe ser positiva
+    transferAccount && // La cuenta del receptor debe existir
+    currentBalance >= amount && // El saldo del remitente debe ser suficiente
+    transferAccount.username !== transferCurrentAccount.username // No se puede transferir a uno mismo
+  ) {
+    // Realizar la transferencia
+    currentAccount.movements.push(-amount);  // Retirar de la cuenta del remitente
+    transferAccount.movements.push(amount);  // Depositar en la cuenta del receptor
+    // Actualizar la interfaz de usuario
+    updateUI(transferCurrentAccount);
+    // Limpiar los campos del formulario
+    inputTransferAmount.value = inputTransferTo.value = "";
+  }
+  // En caso de que no se verifiquen las condiciones
+  else {
+    // Mostramos una alerta por pantalla
+    alert('No se pudo realizar la transferencia. Verifica los datos.');
+  }
+});
