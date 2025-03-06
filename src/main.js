@@ -123,6 +123,7 @@ const inputClosePin = document.querySelector(".form__input--pin");
 
 // Variables
 let currentAccount;
+let isSortedAsc = false;
 
 // Creamos el campo username para todas las cuentas de usuarios
 // Usamos forEach para modificar el array original, en otro caso map
@@ -346,5 +347,24 @@ btnClose.addEventListener("click", function (e) {
   } else {
     // Si el nombre de usuario o PIN son incorrectos, mostramos un mensaje de error
     alert("Datos incorrectos. No se pudo cerrar la cuenta.");
+  }
+});
+
+btnSort.addEventListener('click', function() {
+  // Cambia el estado de ordenación
+  isSortedAsc = !isSortedAsc;
+  if (currentAccount) {
+    // Crea una copia ordenada de los movimientos
+    const sortedMovements = [...currentAccount.movements];
+    // Ordena los movimientos por fecha
+    if (isSortedAsc) {
+      // Orden ascendente (de más antiguo a más reciente)
+      sortedMovements.sort((a, b) => new Date(a.date) - new Date(b.date));
+    } else {
+      // Orden descendente (de más reciente a más antiguo)
+      sortedMovements.sort((a, b) => new Date(b.date) - new Date(a.date));
+    }
+    // Usa la función displayMovements con los movimientos ordenados
+    displayMovements(sortedMovements);
   }
 });
