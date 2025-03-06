@@ -123,7 +123,7 @@ const inputClosePin = document.querySelector(".form__input--pin");
 
 // Variables
 let currentAccount;
-let isSortedAsc = false;
+let isSortedAsc = true;
 
 // Creamos el campo username para todas las cuentas de usuarios
 // Usamos forEach para modificar el array original, en otro caso map
@@ -161,7 +161,7 @@ btnLogin.addEventListener("click", function (e) {
     labelDate.textContent = new Date().toLocaleDateString("es-ES");
   } else {
     // Mostramos una alerta con el login incorrecto
-    alert("Login incorrecto.")
+    alert("Login incorrecto.");
   }
 });
 const updateUI = function ({ movements }) {
@@ -182,7 +182,7 @@ const displayMovements = function (movements) {
     const type = mov.amount > 0 ? "deposit" : "withdrawal";
     // Formateamos la fecha en formato DD/MM/YYYY
     const date = new Date(mov.date);
-    const formattedDate = `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1).toString().padStart(2, "0")}/${date.getFullYear()}`;
+    const formattedDate = formatRelativeDate(date);
     // Creamos el HTML
     const html = `
       <div class="movements__row">
@@ -207,26 +207,64 @@ const displayBalance = function (movements) {
 const displaySummary = function (movements) {
   // Calculamos los ingresos
   const incomes = movements
-    .filter(mov => mov.amount > 0)
+    .filter((mov) => mov.amount > 0)
     .reduce((sum, mov) => sum + mov.amount, 0);
   labelSumIn.textContent = `${incomes.toFixed(2)}€`;
 
   // Calculamos los gastos
   const outflows = movements
-    .filter(mov => mov.amount < 0)
+    .filter((mov) => mov.amount < 0)
     .reduce((sum, mov) => sum + Math.abs(mov.amount), 0);
   labelSumOut.textContent = `${outflows.toFixed(2)}€`;
 
   // Calculamos los intereses (suponiendo que se apliquen solo a depósitos y con una tasa media del 1.5%)
   const interestRate = 1.5 / 100;
   const interest = movements
-    .filter(mov => mov.amount > 0)
-    .map(dep => dep.amount * interestRate)
+    .filter((mov) => mov.amount > 0)
+    .map((dep) => dep.amount * interestRate)
     .reduce((sum, int) => sum + int, 0);
   labelSumInterest.textContent = `${interest.toFixed(2)}€`;
 };
 
-btnTransfer.addEventListener('click', function (e) {
+function formatRelativeDate(date) {
+  const now = new Date();
+  const diffTime = now - date;
+  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+  // Si la fecha es de hoy
+  if (diffDays === 0) {
+    return "Hoy";
+  }
+  // Si la fecha es de ayer
+  if (diffDays === 1) {
+    return "Ayer";
+  }
+  // Si la fecha es de hace menos de una semana
+  if (diffDays < 7) {
+    return `Hace ${diffDays} días`;
+  }
+  // Si la fecha es de hace menos de un mes (aproximadamente)
+  if (diffDays < 30) {
+    const weeks = Math.floor(diffDays / 7);
+    return `Hace ${weeks} ${weeks === 1 ? "semana" : "semanas"}`;
+  }
+  // Si la fecha es de hace menos de un año
+  if (diffDays < 365) {
+    // Calculamos la diferencia en meses
+    const monthsDiff =
+      (now.getFullYear() - date.getFullYear()) * 12 +
+      (now.getMonth() - date.getMonth());
+    return `Hace ${monthsDiff} ${monthsDiff === 1 ? "mes" : "meses"}`;
+  }
+  // Si es más de un año
+  const yearsDiff = now.getFullYear() - date.getFullYear();
+  if (yearsDiff < 5) {
+    return `Hace ${yearsDiff} ${yearsDiff === 1 ? "año" : "años"}`;
+  }
+  // Si es más de 5 años, mostramos la fecha formateada
+  return `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1).toString().padStart(2, "0")}/${date.getFullYear()}`;
+}
+
+btnTransfer.addEventListener("click", function (e) {
   // Evitamos que el formulario se envíe
   e.preventDefault();
   // Se obtiene la cantidad y el nombre de usuario al que se quiere hacer la transferencia
@@ -238,7 +276,7 @@ btnTransfer.addEventListener('click', function (e) {
   );
   // Obtener la cuenta actual del usuario autenticado
   const transferCurrentAccount = cuentasGeneradas.find(
-    account => account.username === currentAccount.username
+    (account) => account.username === currentAccount.username
   );
   // Verificar si la cuenta del receptor existe
   if (!transferAccount) {
@@ -253,26 +291,29 @@ btnTransfer.addEventListener('click', function (e) {
     return;
   }
   // Calcular el saldo del remitente (sumando los movimientos)
-  const currentBalance = transferCurrentAccount.movements.reduce((acc, mov) => acc + mov.amount, 0);
+  const currentBalance = transferCurrentAccount.movements.reduce(
+    (acc, mov) => acc + mov.amount,
+    0
+  );
   // Verificar las condiciones para la transferencia
   if (
-    amount > 0 && 
-    currentBalance >= amount && 
+    amount > 0 &&
+    currentBalance >= amount &&
     transferAccount.username !== transferCurrentAccount.username
   ) {
     // Crear los objetos de movimiento para ambas cuentas
     const currentDate = new Date();
     const movementSender = {
       amount: -amount,
-      date: currentDate
+      date: currentDate,
     };
     const movementReceiver = {
       amount: amount,
-      date: currentDate
+      date: currentDate,
     };
     // Realizar la transferencia
-    transferCurrentAccount.movements.push(movementSender);  // Mov. de la cuenta del remitente
-    transferAccount.movements.push(movementReceiver);  // Mov. de la cuenta del receptor
+    transferCurrentAccount.movements.push(movementSender); // Mov. de la cuenta del remitente
+    transferAccount.movements.push(movementReceiver); // Mov. de la cuenta del receptor
     // Actualizar la interfaz de usuario
     updateUI(transferCurrentAccount);
     // Limpiar los campos del formulario
@@ -281,7 +322,7 @@ btnTransfer.addEventListener('click', function (e) {
   // En caso de que no se verifiquen las condiciones
   else {
     // Mostramos una alerta por pantalla
-    alert('No se pudo realizar la transferencia. Verifica los datos.');
+    alert("No se pudo realizar la transferencia. Verifica los datos.");
   }
 });
 
@@ -291,7 +332,10 @@ btnLoan.addEventListener("click", function (e) {
   const loanAmount = Math.floor(inputLoanAmount.value);
 
   // Comprobamos si el monto es positivo y no supera el 200% del balance actual
-  const currentBalance = currentAccount.movements.reduce((acc, mov) => acc + mov.amount, 0);
+  const currentBalance = currentAccount.movements.reduce(
+    (acc, mov) => acc + mov.amount,
+    0
+  );
   const maxLoanAmount = currentBalance * 2;
 
   if (loanAmount > 0 && loanAmount <= maxLoanAmount) {
@@ -299,7 +343,7 @@ btnLoan.addEventListener("click", function (e) {
     const currentDate = new Date();
     const loanMovement = {
       amount: loanAmount,
-      date: currentDate
+      date: currentDate,
     };
 
     // Agregar el préstamo a la cuenta del usuario
@@ -312,21 +356,28 @@ btnLoan.addEventListener("click", function (e) {
     inputLoanAmount.value = "";
   } else {
     // Si el préstamo no es válido, mostramos un mensaje de error
-    alert(`El préstamo no puede superar el 200% del saldo actual o su cuenta no tiene fondo.`);
+    alert(
+      `El préstamo no puede superar el 200% del saldo actual o su cuenta no tiene fondo.`
+    );
   }
 });
 
 btnClose.addEventListener("click", function (e) {
   e.preventDefault();
-  
+
   // Obtenemos los datos del formulario de cierre de cuenta
   const closeUsername = inputCloseUsername.value;
   const closePin = Number(inputClosePin.value);
 
   // Verificamos si el nombre de usuario y el PIN coinciden con los datos de la cuenta actual
-  if (currentAccount.username === closeUsername && currentAccount.pin === closePin) {
+  if (
+    currentAccount.username === closeUsername &&
+    currentAccount.pin === closePin
+  ) {
     // Eliminamos la cuenta de la lista de cuentas disponibles
-    const accountIndex = cuentasGeneradas.findIndex(account => account.username === currentAccount.username);
+    const accountIndex = cuentasGeneradas.findIndex(
+      (account) => account.username === currentAccount.username
+    );
     if (accountIndex !== -1) {
       cuentasGeneradas.splice(accountIndex, 1); // Elimina la cuenta de cuentasGeneradas
     }
@@ -350,7 +401,7 @@ btnClose.addEventListener("click", function (e) {
   }
 });
 
-btnSort.addEventListener('click', function() {
+btnSort.addEventListener("click", function () {
   // Cambia el estado de ordenación
   isSortedAsc = !isSortedAsc;
   if (currentAccount) {
