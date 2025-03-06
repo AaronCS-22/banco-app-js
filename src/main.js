@@ -269,3 +269,28 @@ btnTransfer.addEventListener('click', function (e) {
     alert('No se pudo realizar la transferencia. Verifica los datos.');
   }
 });
+
+btnLoan.addEventListener("click", function (e) {
+  e.preventDefault();
+  
+  // Obtenemos el monto del préstamo
+  const loanAmount = Number(inputLoanAmount.value);
+
+  // Comprobamos si el monto es positivo y no supera el 200% del balance actual
+  const currentBalance = currentAccount.movements.reduce((acc, mov) => acc + mov, 0);
+  const maxLoanAmount = currentBalance * 2;
+
+  if (loanAmount > 0 && loanAmount <= maxLoanAmount) {
+    // Si el préstamo es válido, se agrega el préstamo como un movimiento positivo
+    currentAccount.movements.push(loanAmount); // Añadir el préstamo al saldo de la cuenta
+
+    // Actualizamos la interfaz de usuario
+    updateUI(currentAccount);
+
+    // Limpiamos el campo de entrada del préstamo
+    inputLoanAmount.value = "";
+  } else {
+    // Si el préstamo no es válido, mostramos un mensaje de error
+    alert(`El préstamo no puede superar el 200% del saldo actual o su cuenta no tiene fondo.`);
+  }
+});
