@@ -3,9 +3,14 @@ import { faker } from "@faker-js/faker";
 function generarCuentaBancaria() {
   const numeroDeMovimientos = faker.number.int({ min: 5, max: 10 });
 
-  const movimientos = Array.from({ length: numeroDeMovimientos }, () =>
-    faker.number.int({ min: -500, max: 500 })
-  );
+  const movimientos = Array.from({ length: numeroDeMovimientos }, () => {
+    const amount = faker.number.int({ min: -500, max: 500 });
+    const date = faker.date.past(1);
+    return {
+      amount,
+      date,
+    };
+  });
 
   return {
     owner: faker.person.fullName(),

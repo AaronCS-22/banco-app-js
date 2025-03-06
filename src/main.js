@@ -156,6 +156,8 @@ btnLogin.addEventListener("click", function (e) {
     updateUI(account);
     // Guardamos los datos de la cuenta para conocer quién está conectado
     currentAccount = account;
+    // Actualizamos la fecha actual
+    labelDate.textContent = new Date().toLocaleDateString("es-ES");
   } else {
     // Mostramos una alerta con el login incorrecto
     alert("Login incorrecto.")
@@ -175,16 +177,19 @@ const displayMovements = function (movements) {
   containerMovements.innerHTML = "";
   // Recorremos el array de movimientos
   movements.forEach((mov, i) => {
-    // Creamos el HTML para cada movimiento y lo guardamos en una variable
-    const type = mov > 0 ? "deposit" : "withdrawal";
+    // Creamos el tipo de movimiento (depósito o retiro)
+    const type = mov.amount > 0 ? "deposit" : "withdrawal";
+    // Formateamos la fecha en formato DD/MM/YYYY
+    const date = new Date(mov.date);
+    const formattedDate = `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1).toString().padStart(2, "0")}/${date.getFullYear()}`;
     // Creamos el HTML
     const html = `
       <div class="movements__row">
         <div class="movements__type movements__type--${type}">${i + 1} ${
           type === "withdrawal" ? "withdrawal" : "deposit"
         }</div>
-        <div class="movements__date">3 days ago</div>
-        <div class="movements__value">${mov.toFixed(2)}€</div>
+        <div class="movements__date">${formattedDate}</div>
+        <div class="movements__value">${mov.amount.toFixed(2)}€</div>
       </div>
     `;
     // Insertamos el HTML en el DOM
@@ -193,7 +198,7 @@ const displayMovements = function (movements) {
 };
 const displayBalance = function (movements) {
   // Calculamos suma de ingresos y retiradas de efectivo
-  const balance = movements.reduce((total, movement) => total + movement, 0);
+  const balance = movements.reduce((total, mov) => total + mov.amount, 0);
   // Actualizamos el DOM:
   labelBalance.textContent = `${balance.toFixed(2)} €`;
 };
@@ -201,21 +206,21 @@ const displayBalance = function (movements) {
 const displaySummary = function (movements) {
   // Calculamos los ingresos
   const incomes = movements
-    .filter(mov => mov > 0)
-    .reduce((sum, mov) => sum + mov, 0);
+    .filter(mov => mov.amount > 0)
+    .reduce((sum, mov) => sum + mov.amount, 0);
   labelSumIn.textContent = `${incomes.toFixed(2)}€`;
 
   // Calculamos los gastos
   const outflows = movements
-    .filter(mov => mov < 0)
-    .reduce((sum, mov) => sum + Math.abs(mov), 0);
+    .filter(mov => mov.amount < 0)
+    .reduce((sum, mov) => sum + Math.abs(mov.amount), 0);
   labelSumOut.textContent = `${outflows.toFixed(2)}€`;
 
   // Calculamos los intereses (suponiendo que se apliquen solo a depósitos y con una tasa media del 1.5%)
   const interestRate = 1.5 / 100;
   const interest = movements
-    .filter(mov => mov > 0)
-    .map(dep => dep * interestRate)
+    .filter(mov => mov.amount > 0)
+    .map(dep => dep.amount * interestRate)
     .reduce((sum, int) => sum + int, 0);
   labelSumInterest.textContent = `${interest.toFixed(2)}€`;
 };
@@ -247,17 +252,26 @@ btnTransfer.addEventListener('click', function (e) {
     return;
   }
   // Calcular el saldo del remitente (sumando los movimientos)
-  const currentBalance = transferCurrentAccount.movements.reduce((acc, mov) => acc + mov, 0);
+  const currentBalance = transferCurrentAccount.movements.reduce((acc, mov) => acc + mov.amount, 0);
   // Verificar las condiciones para la transferencia
   if (
-    amount > 0 && // La cantidad debe ser positiva
-    transferAccount && // La cuenta del receptor debe existir
-    currentBalance >= amount && // El saldo del remitente debe ser suficiente
-    transferAccount.username !== transferCurrentAccount.username // No se puede transferir a uno mismo
+    amount > 0 && 
+    currentBalance >= amount && 
+    transferAccount.username !== transferCurrentAccount.username
   ) {
+    // Crear los objetos de movimiento para ambas cuentas
+    const currentDate = new Date();
+    const movementSender = {
+      amount: -amount,
+      date: currentDate
+    };
+    const movementReceiver = {
+      amount: amount,
+      date: currentDate
+    };
     // Realizar la transferencia
-    currentAccount.movements.push(-amount);  // Retirar de la cuenta del remitente
-    transferAccount.movements.push(amount);  // Depositar en la cuenta del receptor
+    transferCurrentAccount.movements.push(movementSender);  // Mov. de la cuenta del remitente
+    transferAccount.movements.push(movementReceiver);  // Mov. de la cuenta del receptor
     // Actualizar la interfaz de usuario
     updateUI(transferCurrentAccount);
     // Limpiar los campos del formulario
@@ -272,17 +286,23 @@ btnTransfer.addEventListener('click', function (e) {
 
 btnLoan.addEventListener("click", function (e) {
   e.preventDefault();
-  
   // Obtenemos el monto del préstamo
-  const loanAmount = Number(inputLoanAmount.value);
+  const loanAmount = Math.floor(inputLoanAmount.value);
 
   // Comprobamos si el monto es positivo y no supera el 200% del balance actual
-  const currentBalance = currentAccount.movements.reduce((acc, mov) => acc + mov, 0);
+  const currentBalance = currentAccount.movements.reduce((acc, mov) => acc + mov.amount, 0);
   const maxLoanAmount = currentBalance * 2;
 
   if (loanAmount > 0 && loanAmount <= maxLoanAmount) {
     // Si el préstamo es válido, se agrega el préstamo como un movimiento positivo
-    currentAccount.movements.push(loanAmount); // Añadir el préstamo al saldo de la cuenta
+    const currentDate = new Date();
+    const loanMovement = {
+      amount: loanAmount,
+      date: currentDate
+    };
+
+    // Agregar el préstamo a la cuenta del usuario
+    currentAccount.movements.push(loanMovement);
 
     // Actualizamos la interfaz de usuario
     updateUI(currentAccount);
