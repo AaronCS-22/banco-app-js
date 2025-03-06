@@ -294,3 +294,37 @@ btnLoan.addEventListener("click", function (e) {
     alert(`El préstamo no puede superar el 200% del saldo actual o su cuenta no tiene fondo.`);
   }
 });
+
+btnClose.addEventListener("click", function (e) {
+  e.preventDefault();
+  
+  // Obtenemos los datos del formulario de cierre de cuenta
+  const closeUsername = inputCloseUsername.value;
+  const closePin = Number(inputClosePin.value);
+
+  // Verificamos si el nombre de usuario y el PIN coinciden con los datos de la cuenta actual
+  if (currentAccount.username === closeUsername && currentAccount.pin === closePin) {
+    // Eliminamos la cuenta de la lista de cuentas disponibles
+    const accountIndex = cuentasGeneradas.findIndex(account => account.username === currentAccount.username);
+    if (accountIndex !== -1) {
+      cuentasGeneradas.splice(accountIndex, 1); // Elimina la cuenta de cuentasGeneradas
+    }
+
+    // Confirmamos el cierre de cuenta
+    alert("Tu cuenta ha sido cerrada con éxito.");
+
+    // Ocultamos la aplicación y mostramos el formulario de login
+    containerApp.style.opacity = 0;
+    labelWelcome.textContent = "Log in to get started";
+
+    // Limpiamos los campos de entrada de login y close
+    inputLoginUsername.value = inputLoginPin.value = "";
+    inputCloseUsername.value = inputClosePin.value = "";
+
+    // Reseteamos la variable de cuenta actual
+    currentAccount = null;
+  } else {
+    // Si el nombre de usuario o PIN son incorrectos, mostramos un mensaje de error
+    alert("Datos incorrectos. No se pudo cerrar la cuenta.");
+  }
+});
