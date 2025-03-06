@@ -125,6 +125,7 @@ const inputClosePin = document.querySelector(".form__input--pin");
 let currentAccount;
 let isSortedAsc = true;
 
+// ----------------------------------------------- createUsernames -----------------------------------------------
 // Creamos el campo username para todas las cuentas de usuarios
 // Usamos forEach para modificar el array original, en otro caso map
 const createUsernames = function (accounts) {
@@ -136,8 +137,10 @@ const createUsernames = function (accounts) {
       .join(""); // js
   });
 };
+
 createUsernames(cuentasGeneradas);
 
+// ----------------------------------------------- login -----------------------------------------------
 btnLogin.addEventListener("click", function (e) {
   // Evitamos que el formulario se envíe
   e.preventDefault();
@@ -164,6 +167,8 @@ btnLogin.addEventListener("click", function (e) {
     alert("Login incorrecto.");
   }
 });
+
+// ----------------------------------------------- updateUI -----------------------------------------------
 const updateUI = function ({ movements }) {
   // Mostrar los movimientos de la cuenta
   displayMovements(movements);
@@ -173,6 +178,7 @@ const updateUI = function ({ movements }) {
   // Ingresos y gastos
   displaySummary(movements);
 };
+
 const displayMovements = function (movements) {
   // Vaciamos el HTML
   containerMovements.innerHTML = "";
@@ -197,6 +203,7 @@ const displayMovements = function (movements) {
     containerMovements.insertAdjacentHTML("afterbegin", html);
   });
 };
+
 const displayBalance = function (movements) {
   // Calculamos suma de ingresos y retiradas de efectivo
   const balance = movements.reduce((total, mov) => total + mov.amount, 0);
@@ -210,13 +217,11 @@ const displaySummary = function (movements) {
     .filter((mov) => mov.amount > 0)
     .reduce((sum, mov) => sum + mov.amount, 0);
   labelSumIn.textContent = `${incomes.toFixed(2)}€`;
-
   // Calculamos los gastos
   const outflows = movements
     .filter((mov) => mov.amount < 0)
     .reduce((sum, mov) => sum + Math.abs(mov.amount), 0);
   labelSumOut.textContent = `${outflows.toFixed(2)}€`;
-
   // Calculamos los intereses (suponiendo que se apliquen solo a depósitos y con una tasa media del 1.5%)
   const interestRate = 1.5 / 100;
   const interest = movements
@@ -263,6 +268,8 @@ function formatRelativeDate(date) {
   // Si es más de 5 años, mostramos la fecha formateada
   return `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1).toString().padStart(2, "0")}/${date.getFullYear()}`;
 }
+
+// ----------------------------------------------- transfer -----------------------------------------------
 
 btnTransfer.addEventListener("click", function (e) {
   // Evitamos que el formulario se envíe
@@ -326,18 +333,18 @@ btnTransfer.addEventListener("click", function (e) {
   }
 });
 
+// ----------------------------------------------- loan -----------------------------------------------
+
 btnLoan.addEventListener("click", function (e) {
   e.preventDefault();
   // Obtenemos el monto del préstamo
   const loanAmount = Math.floor(inputLoanAmount.value);
-
   // Comprobamos si el monto es positivo y no supera el 200% del balance actual
   const currentBalance = currentAccount.movements.reduce(
     (acc, mov) => acc + mov.amount,
     0
   );
   const maxLoanAmount = currentBalance * 2;
-
   if (loanAmount > 0 && loanAmount <= maxLoanAmount) {
     // Si el préstamo es válido, se agrega el préstamo como un movimiento positivo
     const currentDate = new Date();
@@ -345,13 +352,10 @@ btnLoan.addEventListener("click", function (e) {
       amount: loanAmount,
       date: currentDate,
     };
-
     // Agregar el préstamo a la cuenta del usuario
     currentAccount.movements.push(loanMovement);
-
     // Actualizamos la interfaz de usuario
     updateUI(currentAccount);
-
     // Limpiamos el campo de entrada del préstamo
     inputLoanAmount.value = "";
   } else {
@@ -362,13 +366,13 @@ btnLoan.addEventListener("click", function (e) {
   }
 });
 
+// ----------------------------------------------- close -----------------------------------------------
+
 btnClose.addEventListener("click", function (e) {
   e.preventDefault();
-
   // Obtenemos los datos del formulario de cierre de cuenta
   const closeUsername = inputCloseUsername.value;
   const closePin = Number(inputClosePin.value);
-
   // Verificamos si el nombre de usuario y el PIN coinciden con los datos de la cuenta actual
   if (
     currentAccount.username === closeUsername &&
@@ -381,18 +385,14 @@ btnClose.addEventListener("click", function (e) {
     if (accountIndex !== -1) {
       cuentasGeneradas.splice(accountIndex, 1); // Elimina la cuenta de cuentasGeneradas
     }
-
     // Confirmamos el cierre de cuenta
     alert("Tu cuenta ha sido cerrada con éxito.");
-
     // Ocultamos la aplicación y mostramos el formulario de login
     containerApp.style.opacity = 0;
     labelWelcome.textContent = "Log in to get started";
-
     // Limpiamos los campos de entrada de login y close
     inputLoginUsername.value = inputLoginPin.value = "";
     inputCloseUsername.value = inputClosePin.value = "";
-
     // Reseteamos la variable de cuenta actual
     currentAccount = null;
   } else {
@@ -400,6 +400,8 @@ btnClose.addEventListener("click", function (e) {
     alert("Datos incorrectos. No se pudo cerrar la cuenta.");
   }
 });
+
+// ----------------------------------------------- sort -----------------------------------------------
 
 btnSort.addEventListener("click", function () {
   // Cambia el estado de ordenación
